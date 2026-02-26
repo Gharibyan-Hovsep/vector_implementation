@@ -165,7 +165,7 @@ public:
 	}
 	
 	T getBack() {
-		return m_data[m_size];
+		return m_data[--m_size];
 	}
 
 	int getCapacity() {
@@ -195,6 +195,23 @@ private:
 };
 
 int main() {
-	
+	int arr[] = {1, 2, 3, 4, 5};
+	Vector<int> vec(arr, 5);
+	std::cout << "Front: " <<  vec.getFront() << std::endl;	
+	std::cout << "Back: " << vec.getBack() << std::endl;
+	std::cout << "Size: " << vec.getSize() << std::endl;
+
+	vec.insert(6, 0);
+	vec.push_back(7);
+
+	std::cout << "Front: " <<  vec.getFront() << std::endl;	
+	std::cout << "Back: " << vec.getBack() << std::endl;
+	std::cout << "Size: " << vec.getSize() << std::endl;
+
+	vec.pop_back();
+	std::cout << "Front: " <<  vec.getFront() << std::endl;
+    std::cout << "Back: " << vec.getBack() << std::endl;
+    std::cout << "Size: " << vec.getSize() << std::endl;
+
 	return 0;
 }
