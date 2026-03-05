@@ -1,217 +1,200 @@
-#include <iostream>
+#ifndef SOFTACADEMY_VECTOR_HPP
+#define SOFTACADEMY_VECTOR_HPP
 
-template <typename T> 
+#include <cstddef>
+#include <utility>
+#include <stdexcept>
+
+namespace softacademy {
+
+template <typename T>
 class Vector {
 public:
-	Vector(): m_data(nullptr), m_cap(0), m_size(0) {} 
-	Vector(T* arr, int size) {
-		m_size = size;
-		m_cap = 1;
+    using value_type = T;
+    using size_type  = std::size_t;
 
-		while (m_cap <= size) {
-			m_cap *= 2;
-		}
+    Vector() noexcept : m_data(nullptr), m_size(0), m_cap(0) 
+    {}
 
-		m_data = new T[m_cap];
+    explicit Vector(size_type count) : m_size(count), m_cap(count) {
+        m_data = new T[m_cap]();
+    }
 
-		for (int i = 0; i < size; i++) {
-			 m_data[i] = arr[i];
-		}
-	}
-
-	Vector(const Vector& other): m_data(new T[other.m_cap]), m_size(other.m_size), m_cap(other.m_cap) {
-		for (int i = 0; i < other.m_size; i++) { 
-			m_data[i] = other.m_data[i];
-		}
-	}
-
-	Vector(Vector&& other) : m_data(other.m_data) {
-		other.m_data = nullptr;
-		m_cap = 0;
-		m_size = 0;
-	}
-	~Vector() {
-		delete[] m_data;
-	}
-	
-	Vector& operator=(const Vector& other) {	
-		m_data = new T[other.m_cap];
-
-		for (int i = 0; i < other.m_size; i++) { 
-			m_data[i] = other.m_data[i];
-		}
-		m_cap = other.m_cap;
-		m_size = other.m_size;
-		return *this;
-	}
-
-	Vector&& operator=(Vector&& other) {
-		m_data = new T[other.m_cap];
-		for (int i = 0; i < other.m_size; i++) {
-			m_data[i] = other.m_data[i];
-		}
-		m_cap = other.m_cap;
-		m_size = other.m_size;
-		other.m_data = nullptr;
-		m_cap = 0;
-		m_size = 0;
-		return *this;
-	}
-public:
-	T operator[](int index) {
-		return m_data[index];
-	}
-public: 
-	void push_back(const T value) {
-		if (m_cap > m_size) {	
-			m_data[m_size] = value;
-			m_size++;
-			return;
-		}
-		T* tmp = new T[m_cap];
-		for (int i = 0; i < m_size; i++) {
-			tmp[i] = m_data[i];
-		}
-
-        while (m_cap <= m_size) {
-            m_cap *= 2;
+    Vector(const Vector& other) : m_data(new T[other.m_cap]), m_size(other.m_size), m_cap(other.m_cap) {
+        for (size_type i = 0; i < other.m_size; i++) {
+            m_data[i] = other.m_data[i];
         }
+    }
 
-        m_data = nullptr;
-        m_data = new T[m_cap];
-        for(int i = 0; i < m_size; i++) {
-            m_data[i] = tmp[i];
+    Vector(Vector&& other) noexcept : m_data(other.m_data), m_size(other.m_size), m_cap(other.m_cap) {
+        other.m_data = nullptr; other.m_size = 0; other.m_cap = 0;
+    }
+
+    Vector& operator=(const Vector& other) {
+        if (this != &other) {
+            delete[] m_data;
+            m_size = other.m_size; m_cap = other.m_cap;
+            m_data = new T[m_cap];
+            for (size_type i = 0; i < m_size; i++) {
+                m_data[i] = other.m_data[i];
+            }
         }
-		m_data[m_size] = value;
-		m_size++;
-		tmp = nullptr;
+        return *this;
+    }
 
-		return;	
+    Vector& operator=(Vector&& other) noexcept {
+        if (this != &other) {
+            delete[] m_data;
+            m_data = other.m_data; m_size = other.m_size; m_cap = other.m_cap;
+            other.m_data = nullptr; other.m_size = 0; other.m_cap = 0;
+        }
+        return *this;
+    }
+
+    ~Vector() { 
+        delete[] m_data; 
+    }
+
+    size_type size() const noexcept { 
+		return m_size; 
+	}
+    size_type capacity() const noexcept { 
+		return m_cap; 
+	}
+    bool empty() const noexcept { 
+		return m_size == 0; 
 	}
 
-	void pop_back() {
-		m_size--;
+    void reserve(size_type new_cap) {
+        if (new_cap > m_cap) {
+            reallocate(new_cap);
+        }
+    }
+
+    T& operator[](size_type index) noexcept {
+		 return m_data[index]; 
+	}
+    const T& operator[](size_type index) const noexcept { 
+		return m_data[index]; 
 	}
 
-	void insert(const T value, int index) {
-		if(index < 0 || index > m_size) {
-			throw std::invalid_argument("Incorrect index:");
-		} 
+    T& at(size_type index) {
+        if (index >= m_size) {
+            throw std::out_of_range("Incorrect index:");
+        }
+        return m_data[index];
+    }
 
-		T* tmp = new T[m_cap];
-        for (int i = 0; i < m_size; i++) {
+    const T& at(size_type index) const {
+        if (index >= m_size) {
+            throw std::out_of_range("Incorrect index:");
+        }
+        return m_data[index];
+    }
+
+    T& front() { 
+		return m_data[0]; 
+	}
+    const T& front() const { 
+		return m_data[0]; 
+	}
+    T& back() { 
+		return m_data[m_size - 1]; 
+	}
+    const T& back() const { 
+		return m_data[m_size - 1]; 
+	}
+
+    T* data() noexcept { 
+		return m_data; 
+	}
+    const T* data() const noexcept { 
+		return m_data; 
+	}
+
+    void clear() noexcept { 
+		m_size = 0; 
+	}
+
+    void push_back(const T& value) {
+        grow_if_needed();
+        m_data[m_size++] = value;
+    }
+
+    void push_back(T&& value) {
+        grow_if_needed();
+        m_data[m_size++] = std::move(value);
+    }
+
+    void pop_back() { 
+        if (m_size > 0) {
+            m_size--; 
+        }
+    }
+
+    void resize(size_type new_size) {
+        if (new_size > m_cap) {
+            reserve(new_size);
+        }
+        m_size = new_size;
+    }
+
+    void resize(size_type new_size, const T& value) {
+        if (new_size > m_cap) {
+            reserve(new_size);
+        }
+        for (size_type i = m_size; i < new_size; i++) {
+            m_data[i] = value;
+        }
+        m_size = new_size;
+    }
+
+    void swap(Vector& other) noexcept {
+        T* tmp = new T[m_cap];
+        for(int i = 0; i < (int)m_size; i++) {
             tmp[i] = m_data[i];
         }
-
-        while (m_cap <= m_size) {
-            m_cap *= 2;
+        m_data = new T[other.m_cap];
+        for(int i = 0; i < (int)other.m_size; i++) {
+            m_data[i] = other.m_data[i];
         }
-
-        m_data = nullptr;
-        m_data = new T[m_cap];
-        for(int i = 0; i < m_size; i++) {
-            m_data[i] = tmp[i];
+        other.m_data = new T[m_cap];
+        for(int i = 0; i < (int)m_size; i++) {
+            other.m_data[i] = tmp[i];
         }
-        m_size++;
         tmp = nullptr;
-
-		for(int i = m_size; i > index; i--) {
-			m_data[i] = m_data[i--];
-		}
-
-		m_data[index] = value;
-	}
-	
-	void erase(int index) {
-		if(index < 0 || index > m_size) {
-			throw std::invalid_argument("Incorrect index:");
-		}
-		
-		for(int i = index; i < m_size; i++) {
-			m_data[i] = m_data[i + 1];
-		}
-		m_size--;
-	}
-	
-	void swap(Vector& other) {
-		T* tmp = new T[m_cap];
-		for(int i = 0; i < m_size; i++) {
-			tmp[i] = m_data[i];
-		}
-		
-		m_data = new T[other.m_cap];
-		for(int i = 0; i < other.m_size; i++) {
-			m_data[i] = other.m_data[i];
-		}
-
-		other.m_data = new T[m_cap];
-		for(int i = 0; i < m_size; i++) {
-			other.m_data[i] = tmp[i];
-		}
-
-		tmp = nullptr;
-		m_size = other.m_size;
-	}
-
-	T at(int index) {
-		if(index < 0 || index > m_size) {
-			throw std::invalid_argument("Incorrect index:");
-		}
-		return m_data[index];
-	}
-
-	T getFront() {
-		return m_data[0];
-	}
-	
-	T getBack() {
-		return m_data[--m_size];
-	}
-
-	int getCapacity() {
-		return m_cap;
-	}
-
-	int getSize() {
-		return m_size;
-	}
-
-	bool isEmpty() {
-		if(m_size == 0) {
-			return true;
-		}
-		return false;
-	}
-
-	void clear() {
-		m_size = 0;
-		m_cap = 1;
-	}
+        m_size = other.m_size;
+    }
 
 private:
-	T* m_data;
-	int m_cap;
-	int m_size;
+    T* m_data;
+    size_type m_size;
+    size_type m_cap;
+
+    void grow_if_needed() {
+        if (m_size < m_cap) {
+            return;
+        }
+
+        if (m_cap == 0) {
+            m_cap = 1;
+        }
+
+        reallocate(m_cap * 2);
+    }
+
+    
+    void reallocate(size_type new_capacity) {
+        T* new_data = new T[new_capacity];
+        for (size_type i = 0; i < m_size; i++) {
+            new_data[i] = std::move(m_data[i]);
+        }
+        delete[] m_data;
+        m_data = new_data;
+        m_cap = new_capacity;
+    }
 };
 
-int main() {
-	int arr[] = {1, 2, 3, 4, 5};
-	Vector<int> vec(arr, 5);
-	std::cout << "Front: " <<  vec.getFront() << std::endl;	
-	std::cout << "Back: " << vec.getBack() << std::endl;
-	std::cout << "Size: " << vec.getSize() << std::endl;
+} // namespace softacademy
 
-	vec.insert(6, 0);
-	vec.push_back(7);
-
-	std::cout << "Front: " <<  vec.getFront() << std::endl;	
-	std::cout << "Back: " << vec.getBack() << std::endl;
-	std::cout << "Size: " << vec.getSize() << std::endl;
-
-	vec.pop_back();
-	std::cout << "Front: " <<  vec.getFront() << std::endl;
-    std::cout << "Back: " << vec.getBack() << std::endl;
-    std::cout << "Size: " << vec.getSize() << std::endl;
-
-	return 0;
-}
+#endif
